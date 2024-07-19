@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const GuestbookValidation = z.object({
+  id: z.number().optional(),
   username: z.string().min(1),
   body: z.string().min(1),
 });

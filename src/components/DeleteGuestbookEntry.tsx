@@ -1,22 +1,17 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useGuestbookDelete } from '@/hooks/guestbook';
 
 const DeleteGuestbookEntry = (props: { id: number }) => {
-  const router = useRouter();
+  const mutationDelete = useGuestbookDelete();
 
   const handleDelete = async () => {
-    await fetch(`/api/guestbook`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: props.id,
-      }),
-    });
-
-    router.refresh();
+    const result = await mutationDelete.mutateAsync(props.id);
+    if (result) {
+      alert('ลบข้อมูลสำเร็จ');
+    } else {
+      alert('ดำเนินการไม่สำเร็จ');
+    }
   };
 
   return (

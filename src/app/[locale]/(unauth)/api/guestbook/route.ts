@@ -1,14 +1,41 @@
-import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/libs/DB';
 import { logger } from '@/libs/Logger';
 import { guestbookSchema } from '@/models/Schema';
-import {
-  DeleteGuestbookValidation,
-  EditGuestbookValidation,
-  GuestbookValidation,
-} from '@/validations/GuestbookValidation';
+import { GuestbookValidation } from '@/validations/GuestbookValidation';
+
+const getAll = async (page: number) => {
+  try {
+    const limit = 10;
+    const offset = page * limit;
+
+    const guestbooks = await db
+      .select()
+      .from(guestbookSchema)
+      .offset(offset)
+      .limit(limit);
+
+    const totalItem = (await db.select().from(guestbookSchema)).length;
+    const totalPage = Math.ceil(totalItem / limit);
+
+    logger.info('Fetched all guestbook entries');
+
+    return NextResponse.json({ row: guestbooks, totalItem, totalPage });
+  } catch (error) {
+    logger.error(error, 'An error occurred while fetching guestbook entries');
+
+    return NextResponse.json({}, { status: 500 });
+  }
+};
+
+export const GET = async (request: Request) => {
+  const params = new URL(request.url).searchParams;
+
+  const result = await getAll(parseInt(params.get('activePage') || '0', 10));
+
+  return result;
+};
 
 export const POST = async (request: Request) => {
   const json = await request.json();
@@ -31,56 +58,6 @@ export const POST = async (request: Request) => {
     });
   } catch (error) {
     logger.error(error, 'An error occurred while creating a guestbook');
-
-    return NextResponse.json({}, { status: 500 });
-  }
-};
-
-export const PUT = async (request: Request) => {
-  const json = await request.json();
-  const parse = EditGuestbookValidation.safeParse(json);
-
-  if (!parse.success) {
-    return NextResponse.json(parse.error.format(), { status: 422 });
-  }
-
-  try {
-    await db
-      .update(guestbookSchema)
-      .set({
-        body: parse.data.body,
-        username: parse.data.username,
-      })
-      .where(eq(guestbookSchema.id, parse.data.id));
-
-    logger.info('A guestbook entry has been updated');
-
-    return NextResponse.json({});
-  } catch (error) {
-    logger.error(error, 'An error occurred while updating a guestbook');
-
-    return NextResponse.json({}, { status: 500 });
-  }
-};
-
-export const DELETE = async (request: Request) => {
-  const json = await request.json();
-  const parse = DeleteGuestbookValidation.safeParse(json);
-
-  if (!parse.success) {
-    return NextResponse.json(parse.error.format(), { status: 422 });
-  }
-
-  try {
-    await db
-      .delete(guestbookSchema)
-      .where(eq(guestbookSchema.id, parse.data.id));
-
-    logger.info('A guestbook entry has been deleted');
-
-    return NextResponse.json({});
-  } catch (error) {
-    logger.error(error, 'An error occurred while deleting a guestbook');
 
     return NextResponse.json({}, { status: 500 });
   }

@@ -38,28 +38,7 @@ const EditableGuestbookEntry = (props: {
 
       <div className="ml-1 grow">
         {isEditing ? (
-          <GuestbookForm
-            edit
-            id={props.id}
-            defaultValues={{
-              username: props.username,
-              body: props.body,
-            }}
-            onValid={async (data) => {
-              await fetch(`/api/guestbook`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  id: props.id,
-                  ...data,
-                }),
-              });
-
-              setIsEditing(false);
-            }}
-          />
+          <GuestbookForm id={props.id} />
         ) : (
           <>
             <span className="text-gray-500">{props.username}:</span>{' '}
